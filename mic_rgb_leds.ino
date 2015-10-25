@@ -16,7 +16,7 @@ int j = 0;
 int memAddress = 0;
 int myMode;
 int randMode = 0;
-int sensitivity = 3;//1 or 2 = Most sensitive; 10 = Least Sensitive
+int sensitivity = 4;//1 or 2 = Most sensitive; 10 = Least Sensitive
 
 void setup ()
 {
