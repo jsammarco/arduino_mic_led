@@ -11,3 +11,4 @@ Video Demo: [https://www.youtube.com/watch?v=8ICoLHIEo2M](https://www.youtube.co
 * 	Red
 * 	Green
 * 	Blue
+* 	Random (mix of all modes)
