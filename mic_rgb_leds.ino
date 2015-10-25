@@ -1,5 +1,6 @@
 #include <Adafruit_NeoPixel.h>
 #include <avr/power.h>
+#include <EEPROM.h>
 
 #define PIN 6
 
@@ -12,46 +13,60 @@ long baseline = 0;
 long diff = 0;
 int i = 0;
 int j = 0;
+int memAddress = 0;
+int myMode;
+int sensitivity = 4;//1 or 2 = Most sensitive; 10 = Least Sensitive
 
-void setup () 
+void setup ()
 {
-  #if defined (__AVR_ATtiny85__)
-    if (F_CPU == 16000000) clock_prescale_set(clock_div_1);
-  #endif
-  //pinMode (ledPin, OUTPUT);
+#if defined (__AVR_ATtiny85__)
+  if (F_CPU == 16000000) clock_prescale_set(clock_div_1);
+#endif
+  myMode = int(EEPROM.read(memAddress));
+  if (myMode > 4 || myMode < 0) {
+    myMode = 0;
+  }
+  EEPROM.write(memAddress, myMode + 1); 
   Serial.begin (9600);
   baseline = analogRead (sensorPin);
   strip.begin();
-  for (j=0; j<100; j++) {
-    for (i=0; i<strip.numPixels(); i++) {
-        strip.setPixelColor(i, Wheel(((i * 256 / strip.numPixels()) + j) & 255));
-        strip.show();
-    }
-    delay(10);
-  }
 }
- 
-void loop () 
+
+void loop ()
 {
   delay(1);
   sensorValue = analogRead (sensorPin);
-  baseline = (sensorValue+baseline)/2;
+  baseline = (sensorValue + baseline) / 2;
+  Serial.print(myMode);
+  Serial.print(" ");
   Serial.print(sensorValue, DEC);
   Serial.print(" ");
   Serial.print(baseline);
   Serial.print(" ");
   diff = max(baseline, sensorValue) - min(baseline, sensorValue);
-  for(i = 0; i < strip.numPixels(); i++){
+  for (i = 0; i < strip.numPixels(); i++) {
     strip.setPixelColor(i, strip.Color(0, 0, 0));
   }
   strip.show();
   if (diff > 1) {
     //if(diff > 2) { diff = diff / (diff/2); }
     //diff = diff * 2;
-    if (j > 256*5) { j = 0; }
+    if (j > 256 * 5) {
+      j = 0;
+    }
     for (i = 0; i < diff; i++) {
       Serial.print("=");
-      strip.setPixelColor(i-10, Wheel(((i * 256 / strip.numPixels()) + j) & 255));
+      if (myMode == 0) {
+        strip.setPixelColor(i - sensitivity, Wheel(((i * 256 / strip.numPixels()) + j) & 255));
+      } else if (myMode == 1) {
+        strip.setPixelColor(i - sensitivity, strip.Color(100, 100, 100));
+      } else if (myMode == 2) {
+        strip.setPixelColor(i - sensitivity, strip.Color(255, 0, 0));
+      } else if (myMode == 3) {
+        strip.setPixelColor(i - sensitivity, strip.Color(0, 255, 0));
+      } else if (myMode == 4) {
+        strip.setPixelColor(i - sensitivity, strip.Color(0, 0, 255));
+      }
       strip.show();
     }
   }
@@ -64,14 +79,14 @@ void loop ()
 // The colours are a transition r - g - b - back to r.
 uint32_t Wheel(byte WheelPos) {
   WheelPos = 255 - WheelPos;
-  if(WheelPos < 85) {
-   return strip.Color(255 - WheelPos * 3, 0, WheelPos * 3);
-  } else if(WheelPos < 170) {
+  if (WheelPos < 85) {
+    return strip.Color(255 - WheelPos * 3, 0, WheelPos * 3);
+  } else if (WheelPos < 170) {
     WheelPos -= 85;
-   return strip.Color(0, WheelPos * 3, 255 - WheelPos * 3);
+    return strip.Color(0, WheelPos * 3, 255 - WheelPos * 3);
   } else {
-   WheelPos -= 170;
-   return strip.Color(WheelPos * 3, 255 - WheelPos * 3, 0);
+    WheelPos -= 170;
+    return strip.Color(WheelPos * 3, 255 - WheelPos * 3, 0);
   }
 }
 
